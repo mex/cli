@@ -334,7 +334,12 @@ cli.parse = function (opts, command_def) {
         }
         if (!seen) {
             if (enable.help && (o === 'h' || o === 'help')) {
-                cli.getUsage();
+                if (cli.args.length > 0) {
+                    cli.getUsage(cli.autocompleteCommand(cli.args.shift()));
+                }
+                else {
+                    cli.getUsage();
+                }
             } else if (enable.version && (o === 'v' || o === 'version')) {
                 if (cli.version == null) {
                     cli.parsePackageJson();
@@ -564,8 +569,8 @@ var pad = function (str, len) {
  *
  * @api public
  */
-cli.getUsage = function (code) {
-    var short, desc, optional, line, seen_opts = [],
+cli.getUsage = function (command) {
+    var short, desc, optional, scope, line, seen_opts = [],
         switch_pad = cli.option_width;
 
     var trunc_desc = function (pref, desc, len) {
@@ -608,7 +613,12 @@ cli.getUsage = function (code) {
         //Parse opt_list
         desc = opt_list[opt][1].trim();
         type = opt_list[opt].length >= 3 ? opt_list[opt][2] : null;
-        optional = opt_list[opt].length === 4 ? opt_list[opt][3] : null;
+        optional = opt_list[opt].length >= 4 ? opt_list[opt][3] : null;
+        scope = opt_list[opt].length === 5 ? opt_list[opt][4] : null;
+
+        if (!scope && command || scope !== command) {
+            continue;
+        }
 
         //Build usage line
         if (short === long) {
@@ -682,7 +692,7 @@ cli.getUsage = function (code) {
             console.error('  ' + trunc_desc('  ', command_list.join(', ')));
         }
     }
-    return cli.exit(code);
+    return cli.exit();
 };
 
 /**
